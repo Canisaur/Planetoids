@@ -1,0 +1,7 @@
+name: PlanetoidGen
+main: org.canis85.planetoidgen.PlanetoidGen
+version: 1.0.0
+commands:
+    pltp:
+        description: Moves the player to the planetoids area
+        usage: /pltp
