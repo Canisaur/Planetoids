@@ -42,6 +42,7 @@ public class PlanetoidGen extends JavaPlugin {
       Map<Material, Float> shells = new EnumMap<Material, Float>(Material.class);
       Material floor = Material.AIR;
       boolean bedrockFloor = false;
+      boolean pltpEnabled = false;
       int floorHeight = 0;
       long seed = 0;
       int density = 0;
@@ -87,7 +88,7 @@ public class PlanetoidGen extends JavaPlugin {
             String[] curLine = rdr.readLine().split(":");
             if (curLine[0].equals("pltp-command-enabled")) {
                if (curLine[1].equalsIgnoreCase("true")) {
-                  getCommand("pltp").setExecutor(new PGPltpCommand(this, worldName));
+                  pltpEnabled = true;
                }
             } else if (curLine[0].equals("world-name")) {
                worldName = curLine[1];
@@ -144,6 +145,9 @@ public class PlanetoidGen extends JavaPlugin {
                   System.err.println("Unrecognized setting in Planetoids settings file: " + curLine[0]);
                }
             }
+         }
+         if (pltpEnabled) {
+            getCommand("pltp").setExecutor(new PGPltpCommand(this, worldName));
          }
          settingsLoaded = true;
       } catch (Exception ex) {
