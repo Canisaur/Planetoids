@@ -3,7 +3,6 @@ package org.canis85.planetoidgen;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,19 +35,21 @@ public class PGChunkGenerator extends ChunkGenerator {
    private int maxShellSize;  //Maximum shell thickness
    private int minShellSize;  //Minimum shell thickness, should be at least 3
 
-   public PGChunkGenerator(long seed) {
+   public PGChunkGenerator(long seed, Map<Material, Float> cores, Map<Material, Float> shells, int[] planetParams, Material floorMat, boolean bedrock, int floorHeight) {
       this.seed = seed;
-      density = 15000;
-      minSize = 4;
-      maxSize = 20;
-      minDistance = 10;
-      floorBlock = Material.STATIONARY_WATER;
-      floorHeight = 5;
-      minShellSize = 3;
-      maxShellSize = 5;
+      this.density = planetParams[0];
+      minSize = planetParams[1];
+      maxSize = planetParams[2];
+      minDistance = planetParams[3];
+      floorBlock = floorMat;
+      this.floorHeight = floorHeight;
+      minShellSize = planetParams[4];
+      maxShellSize = planetParams[5];
+      allowedShells = shells;
+      allowedCores = cores;
       cache = new HashMap<Point, List<Planetoid>>();
 
-      allowedShells = new EnumMap<Material, Float>(Material.class);
+      /*allowedShells = new EnumMap<Material, Float>(Material.class);
       allowedCores = new EnumMap<Material, Float>(Material.class);
 
       allowedShells.put(Material.STONE, 1.0f);
@@ -77,7 +78,7 @@ public class PGChunkGenerator extends ChunkGenerator {
       allowedCores.put(Material.REDSTONE_ORE, 1.0f);
       allowedCores.put(Material.SAND, 1.0f);
       allowedCores.put(Material.BEDROCK, 1.0f);
-      allowedCores.put(Material.AIR, 1.0f);
+      allowedCores.put(Material.AIR, 1.0f);*/
    }
 
    @Override
