@@ -87,7 +87,7 @@ public class PlanetoidGen extends JavaPlugin {
             String[] curLine = rdr.readLine().split(":");
             if (curLine[0].equals("pltp-command-enabled")) {
                if (curLine[1].equalsIgnoreCase("true")) {
-                  getCommand("pltp").setExecutor(new PGPltpCommand(this));
+                  getCommand("pltp").setExecutor(new PGPltpCommand(this, worldName));
                }
             } else if (curLine[0].equals("world-name")) {
                worldName = curLine[1];

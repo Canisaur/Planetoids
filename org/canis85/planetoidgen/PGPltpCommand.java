@@ -16,9 +16,11 @@ import org.bukkit.command.CommandSender;
 */
 public class PGPltpCommand implements CommandExecutor {
     private final PlanetoidGen plugin;
+    private String worldName;
 
-    public PGPltpCommand(PlanetoidGen plugin) {
+    public PGPltpCommand(PlanetoidGen plugin, String worldName) {
         this.plugin = plugin;
+        this.worldName = worldName;
     }
 
     @Override
@@ -28,7 +30,7 @@ public class PGPltpCommand implements CommandExecutor {
         }
         Player player = (Player) sender;
 
-        player.teleport(plugin.getServer().getWorld("Planetoids").getSpawnLocation());
+        player.teleport(plugin.getServer().getWorld(worldName).getSpawnLocation());
 
         return true;
     }
