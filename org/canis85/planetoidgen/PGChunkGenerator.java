@@ -1,16 +1,27 @@
 package org.canis85.planetoidgen;
 
 import java.awt.Point;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.util.config.Configuration;
 
 /**
  * Generates a Planetoids world.
@@ -24,6 +35,7 @@ public class PGChunkGenerator extends ChunkGenerator {
    private Map<Material, Float> allowedShells;
    private Map<Material, Float> allowedCores;
    private Map<Point, List<Planetoid>> cache;
+   private Configuration planetConfig;
    private static final int SYSTEM_SIZE = 100;
    private long seed;   //Seed for generating planetoids
    private int density; //Number of planetoids it will try to create per "system"
@@ -34,51 +46,52 @@ public class PGChunkGenerator extends ChunkGenerator {
    private Material floorBlock; //BlockID for the floor
    private int maxShellSize;  //Maximum shell thickness
    private int minShellSize;  //Minimum shell thickness, should be at least 3
+   private Plugin plugin;     //ref to plugin
 
-   public PGChunkGenerator(long seed, Map<Material, Float> cores, Map<Material, Float> shells, int[] planetParams, Material floorMat, boolean bedrock, int floorHeight) {
-      this.seed = seed;
-      this.density = planetParams[0];
-      minSize = planetParams[1];
-      maxSize = planetParams[2];
-      minDistance = planetParams[3];
-      floorBlock = floorMat;
-      this.floorHeight = floorHeight;
-      minShellSize = planetParams[4];
-      maxShellSize = planetParams[5];
-      allowedShells = shells;
-      allowedCores = cores;
-      cache = new HashMap<Point, List<Planetoid>>();
-
-      /*allowedShells = new EnumMap<Material, Float>(Material.class);
+   private void loadAllowedBlocks() {
       allowedCores = new EnumMap<Material, Float>(Material.class);
+      allowedShells = new EnumMap<Material, Float>(Material.class);
+      for (String s : planetConfig.getStringList("planetoids.planets.blocks.cores", null)) {
+         String[] sSplit = s.split("-");
+         Material newMat = Material.matchMaterial(sSplit[0]);
+         if (newMat.isBlock()) {
+            if (sSplit.length == 2) {
+               allowedCores.put(newMat, Float.valueOf(sSplit[1]));
+            } else {
+               allowedCores.put(newMat, 1.0f);
+            }
+         }
+      }
 
-      allowedShells.put(Material.STONE, 1.0f);
-      allowedShells.put(Material.DIRT, 1.0f);
-      allowedShells.put(Material.LEAVES, 1.0f);
-      allowedShells.put(Material.ICE, 1.0f);
-      allowedShells.put(Material.SNOW_BLOCK, 1.0f);
-      allowedShells.put(Material.GLOWSTONE, 1.0f);
-      allowedShells.put(Material.BRICK, 1.0f);
-      allowedShells.put(Material.SANDSTONE, 1.0f);
-      allowedShells.put(Material.OBSIDIAN, 1.0f);
-      allowedShells.put(Material.MOSSY_COBBLESTONE, 1.0f);
-      allowedShells.put(Material.WOOL, 1.0f);
-      allowedShells.put(Material.GLASS, 1.0f);
+      for (String s : planetConfig.getStringList("planetoids.planets.blocks.shells", null)) {
+         String[] sSplit = s.split("-");
+         Material newMat = Material.matchMaterial(sSplit[0]);
+         if (newMat.isBlock()) {
+            if (sSplit.length == 2) {
+               allowedShells.put(newMat, Float.valueOf(sSplit[1]));
+            } else {
+               allowedShells.put(newMat, 1.0f);
+            }
+         }
+      }
+   }
 
-      allowedCores.put(Material.PUMPKIN, 1.0f);
-      allowedCores.put(Material.STATIONARY_LAVA, 1.0f);
-      allowedCores.put(Material.STATIONARY_WATER, 1.0f);
-      allowedCores.put(Material.COAL_ORE, 1.0f);
-      allowedCores.put(Material.IRON_ORE, 1.0f);
-      allowedCores.put(Material.DIAMOND_ORE, 1.0f);
-      allowedCores.put(Material.CLAY, 1.0f);
-      allowedCores.put(Material.LAPIS_ORE, 1.0f);
-      allowedCores.put(Material.LOG, 1.0f);
-      allowedCores.put(Material.GOLD_ORE, 1.0f);
-      allowedCores.put(Material.REDSTONE_ORE, 1.0f);
-      allowedCores.put(Material.SAND, 1.0f);
-      allowedCores.put(Material.BEDROCK, 1.0f);
-      allowedCores.put(Material.AIR, 1.0f);*/
+   public PGChunkGenerator(Configuration planetConfig, Plugin plugin) {
+      this.plugin = plugin;
+      this.planetConfig = planetConfig;
+      this.seed = (long) planetConfig.getDouble("planetoids.seed", 0.0);
+      this.density = planetConfig.getInt("planetoids.planets.density", 15000);
+      minSize = planetConfig.getInt("planetoids.planets.minSize", 4);
+      maxSize = planetConfig.getInt("planetoids.planets.maxSize", 20);
+      minDistance = planetConfig.getInt("planetoids.planets.minDistance", 10);
+      floorBlock = Material.matchMaterial(planetConfig.getString("planetoids.planets.floorBlock", "STATIONARY_WATER"));
+      this.floorHeight = planetConfig.getInt("planetoids.planets.floorHeight", 4);
+      minShellSize = planetConfig.getInt("planetoids.planets.minShellSize", 3);
+      maxShellSize = planetConfig.getInt("planetoids.planets.maxShellSize", 5);
+
+      loadAllowedBlocks();
+
+      cache = new HashMap<Point, List<Planetoid>>();
    }
 
    @Override
@@ -105,9 +118,41 @@ public class PGChunkGenerator extends ChunkGenerator {
       List<Planetoid> curSystem = cache.get(new Point(sysX, sysZ));
 
       if (curSystem == null) {
-         //if not, generate and cache it
-         curSystem = generatePlanets(sysX, sysZ);
-         cache.put(new Point(sysX, sysZ), curSystem);
+         //if not, does it exist on disk?
+         File systemFolder = new File(plugin.getDataFolder(), "Systems");
+         if (!systemFolder.exists()) {
+            systemFolder.mkdir();
+         }
+         File systemFile = new File(systemFolder, "system_" + sysX + "." + sysZ + ".dat");
+         if (systemFile.exists()) {
+            try {
+               //load and cache
+               FileInputStream fis = new FileInputStream(systemFile);
+               ObjectInputStream ois = new ObjectInputStream(fis);
+               curSystem = (List<Planetoid>)ois.readObject();
+               cache.put(new Point(sysX, sysZ), curSystem);
+               ois.close();
+               fis.close();
+            } catch (Exception ex) {
+               ex.printStackTrace();
+            }
+         } else {
+            //generate, save, and cache
+            curSystem = generatePlanets(sysX, sysZ);
+            try {
+               systemFile.createNewFile();
+               FileOutputStream fos = new FileOutputStream(systemFile);
+               ObjectOutputStream oos = new ObjectOutputStream(fos);
+               oos.writeObject(curSystem);
+               oos.flush();
+               oos.close();
+               fos.flush();
+               fos.close();
+            } catch (Exception ex) {
+               ex.printStackTrace();
+            }
+            cache.put(new Point(sysX, sysZ), curSystem);
+         }
       }
 
       //figure out the chunk's position in the "system"

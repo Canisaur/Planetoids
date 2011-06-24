@@ -1,5 +1,6 @@
 package org.canis85.planetoidgen;
 
+import java.io.Serializable;
 import org.bukkit.Material;
 
 /**
@@ -7,7 +8,7 @@ import org.bukkit.Material;
  *
  * @author Canis85
  */
-public class Planetoid {
+public class Planetoid implements Serializable {
 
    public Material coreBlk;
    public Material shellBlk;
