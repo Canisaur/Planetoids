@@ -14,8 +14,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -79,8 +81,8 @@ public class PGChunkGenerator extends ChunkGenerator {
    public PGChunkGenerator(Configuration planetConfig, Plugin plugin) {
       this.plugin = plugin;
       this.planetConfig = planetConfig;
-      this.seed = (long) planetConfig.getDouble("planetoids.seed", 0.0);
-      this.density = planetConfig.getInt("planetoids.planets.density", 15000);
+      this.seed = (long) planetConfig.getDouble("planetoids.seed", plugin.getServer().getWorlds().get(0).getSeed());
+      this.density = planetConfig.getInt("planetoids.planets.density", 2000);
       minSize = planetConfig.getInt("planetoids.planets.minSize", 4);
       maxSize = planetConfig.getInt("planetoids.planets.maxSize", 20);
       minDistance = planetConfig.getInt("planetoids.planets.minDistance", 10);
@@ -104,14 +106,16 @@ public class PGChunkGenerator extends ChunkGenerator {
       if (x >= 0) {
          sysX = x / SYSTEM_SIZE;
       } else {
-         sysX = (int) Math.floor((x / (float) SYSTEM_SIZE));
+         sysX = (int) Math.ceil((-x)/(SYSTEM_SIZE+1));
+         sysX = -sysX;
       }
 
       int sysZ;
       if (z >= 0) {
          sysZ = z / SYSTEM_SIZE;
       } else {
-         sysZ = (int) Math.floor((z / (float) SYSTEM_SIZE));
+         sysZ = (int) Math.ceil((-z)/(SYSTEM_SIZE+1));
+         sysZ = -sysZ;
       }
 
       //check if the "system" this chunk is in is cached
@@ -160,13 +164,23 @@ public class PGChunkGenerator extends ChunkGenerator {
       if (x >= 0) {
          chunkXPos = (x % SYSTEM_SIZE) * 16;
       } else {
-         chunkXPos = SYSTEM_SIZE * 16 + ((x % SYSTEM_SIZE) * 16);
+         chunkXPos = ((-x) % SYSTEM_SIZE) * 16;
+         if (chunkXPos == 0) {
+            chunkXPos = SYSTEM_SIZE*16;
+         }
+         chunkXPos = (SYSTEM_SIZE)*16 - chunkXPos;
+         //chunkXPos = SYSTEM_SIZE * 16 + ((x % SYSTEM_SIZE) * 16);
       }
       int chunkZPos;
       if (z >= 0) {
          chunkZPos = (z % SYSTEM_SIZE) * 16;
       } else {
-         chunkZPos = SYSTEM_SIZE * 16 + ((z % SYSTEM_SIZE) * 16);
+         chunkZPos = ((-z) % SYSTEM_SIZE) * 16;
+         if (chunkZPos == 0) {
+            chunkZPos = SYSTEM_SIZE*16;
+         }
+         chunkZPos = (SYSTEM_SIZE)*16 - chunkZPos;
+         //chunkZPos = SYSTEM_SIZE * 16 + ((z % SYSTEM_SIZE) * 16);
       }
 
       //Go through the current system's planetoids and fill in this chunk as needed.
@@ -320,7 +334,7 @@ public class PGChunkGenerator extends ChunkGenerator {
             planetoids.add(curPl);
          }
       }
-      System.out.println("Made " + planetoids.size() + " planets in this region."); //DEBUG
+      System.out.println("Made new system with " + planetoids.size() + " planetoids."); //DEBUG
       return planetoids;
    }
 

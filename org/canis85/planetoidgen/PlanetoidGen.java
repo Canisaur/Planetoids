@@ -1,14 +1,11 @@
 package org.canis85.planetoidgen;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -32,11 +29,11 @@ public class PlanetoidGen extends JavaPlugin {
 
    private void loadDefaults() {
       CONFIG_DEFAULTS.put("planetoids.worldname", "Planetoids");
-      CONFIG_DEFAULTS.put("planetoids.alwaysnight", Boolean.valueOf(true));
+      CONFIG_DEFAULTS.put("planetoids.alwaysnight", Boolean.valueOf(false));
       CONFIG_DEFAULTS.put("planetoids.weather", Boolean.valueOf(false));
       CONFIG_DEFAULTS.put("planetoids.commands.pltp", Boolean.valueOf(true));
       CONFIG_DEFAULTS.put("planetoids.seed", getServer().getWorlds().get(0).getSeed());
-      CONFIG_DEFAULTS.put("planetoids.planets.density", 15000);
+      CONFIG_DEFAULTS.put("planetoids.planets.density", 2000);
       CONFIG_DEFAULTS.put("planetoids.planets.minSize", 4);
       CONFIG_DEFAULTS.put("planetoids.planets.maxSize", 20);
       CONFIG_DEFAULTS.put("planetoids.planets.minDistance", 10);
@@ -81,9 +78,6 @@ public class PlanetoidGen extends JavaPlugin {
       CONFIG_DEFAULTS.put("planetoids.planets.blocks.shells", shells);
    }
 
-   // NOTE: There should be no need to define a constructor any more for more info on moving from
-   // the old constructor see:
-   // http://forums.bukkit.org/threads/too-long-constructor.5032/
    public void onDisable() {
       // TODO: Place any custom disable code here
       if (worldName != null) {
