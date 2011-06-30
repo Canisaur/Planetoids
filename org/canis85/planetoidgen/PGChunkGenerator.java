@@ -3,7 +3,6 @@ package org.canis85.planetoidgen;
 import java.awt.Point;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,10 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Timer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -106,7 +101,7 @@ public class PGChunkGenerator extends ChunkGenerator {
       if (x >= 0) {
          sysX = x / SYSTEM_SIZE;
       } else {
-         sysX = (int) Math.ceil((-x)/(SYSTEM_SIZE+1));
+         sysX = (int) Math.ceil((-x) / (SYSTEM_SIZE + 1));
          sysX = -sysX;
       }
 
@@ -114,7 +109,7 @@ public class PGChunkGenerator extends ChunkGenerator {
       if (z >= 0) {
          sysZ = z / SYSTEM_SIZE;
       } else {
-         sysZ = (int) Math.ceil((-z)/(SYSTEM_SIZE+1));
+         sysZ = (int) Math.ceil((-z) / (SYSTEM_SIZE + 1));
          sysZ = -sysZ;
       }
 
@@ -133,7 +128,7 @@ public class PGChunkGenerator extends ChunkGenerator {
                //load and cache
                FileInputStream fis = new FileInputStream(systemFile);
                ObjectInputStream ois = new ObjectInputStream(fis);
-               curSystem = (List<Planetoid>)ois.readObject();
+               curSystem = (List<Planetoid>) ois.readObject();
                cache.put(new Point(sysX, sysZ), curSystem);
                ois.close();
                fis.close();
@@ -166,9 +161,9 @@ public class PGChunkGenerator extends ChunkGenerator {
       } else {
          chunkXPos = ((-x) % SYSTEM_SIZE) * 16;
          if (chunkXPos == 0) {
-            chunkXPos = SYSTEM_SIZE*16;
+            chunkXPos = SYSTEM_SIZE * 16;
          }
-         chunkXPos = (SYSTEM_SIZE)*16 - chunkXPos;
+         chunkXPos = (SYSTEM_SIZE) * 16 - chunkXPos;
          //chunkXPos = SYSTEM_SIZE * 16 + ((x % SYSTEM_SIZE) * 16);
       }
       int chunkZPos;
@@ -177,9 +172,9 @@ public class PGChunkGenerator extends ChunkGenerator {
       } else {
          chunkZPos = ((-z) % SYSTEM_SIZE) * 16;
          if (chunkZPos == 0) {
-            chunkZPos = SYSTEM_SIZE*16;
+            chunkZPos = SYSTEM_SIZE * 16;
          }
-         chunkZPos = (SYSTEM_SIZE)*16 - chunkZPos;
+         chunkZPos = (SYSTEM_SIZE) * 16 - chunkZPos;
          //chunkZPos = SYSTEM_SIZE * 16 + ((z % SYSTEM_SIZE) * 16);
       }
 
@@ -189,34 +184,43 @@ public class PGChunkGenerator extends ChunkGenerator {
          int relCenterX = curPl.xPos - chunkXPos;
          int relCenterZ = curPl.zPos - chunkZPos;
 
+         //Generate shell
          for (int curX = -curPl.radius; curX <= curPl.radius; curX++) {
-            boolean xShell = false;
             int blkX = curX + relCenterX;
             if (blkX >= 0 && blkX < 16) {
                //Figure out radius of this circle
                int distFromCenter = Math.abs(curX);
-               if (curPl.radius - distFromCenter < curPl.shellThickness) {
-                  xShell = true;
-               }
                int radius = (int) Math.ceil(Math.sqrt((curPl.radius * curPl.radius) - (distFromCenter * distFromCenter)));
                for (int curZ = -radius; curZ <= radius; curZ++) {
                   int blkZ = curZ + relCenterZ;
                   if (blkZ >= 0 && blkZ < 16) {
-                     boolean zShell = false;
                      int zDistFromCenter = Math.abs(curZ);
-                     if (radius - zDistFromCenter < curPl.shellThickness) {
-                        zShell = true;
-                     }
                      int zRadius = (int) Math.ceil(Math.sqrt((radius * radius) - (zDistFromCenter * zDistFromCenter)));
                      for (int curY = -zRadius; curY <= zRadius; curY++) {
                         int blkY = curPl.yPos + curY;
-                        boolean yShell = false;
-                        if (zRadius - Math.abs(curY) < curPl.shellThickness) {
-                           yShell = true;
-                        }
-                        if (xShell || zShell || yShell) {
-                           retVal[(blkX * 16 + blkZ) * 128 + blkY] = (byte) curPl.shellBlk.getId();
-                        } else {
+                        retVal[(blkX * 16 + blkZ) * 128 + blkY] = (byte) curPl.shellBlk.getId();
+                     }
+                  }
+               }
+            }
+         }
+
+         //Generate core
+         int coreRadius = curPl.radius - curPl.shellThickness;
+         if (coreRadius > 0) {
+            for (int curX = -coreRadius; curX <= coreRadius; curX++) {
+               int blkX = curX + relCenterX;
+               if (blkX >= 0 && blkX < 16) {
+                  //Figure out radius of this circle
+                  int distFromCenter = Math.abs(curX);
+                  int radius = (int) Math.ceil(Math.sqrt((coreRadius * coreRadius) - (distFromCenter * distFromCenter)));
+                  for (int curZ = -radius; curZ <= radius; curZ++) {
+                     int blkZ = curZ + relCenterZ;
+                     if (blkZ >= 0 && blkZ < 16) {
+                        int zDistFromCenter = Math.abs(curZ);
+                        int zRadius = (int) Math.ceil(Math.sqrt((radius * radius) - (zDistFromCenter * zDistFromCenter)));
+                        for (int curY = -zRadius; curY <= zRadius; curY++) {
+                           int blkY = curPl.yPos + curY;
                            retVal[(blkX * 16 + blkZ) * 128 + blkY] = (byte) curPl.coreBlk.getId();
                         }
                      }

@@ -32,6 +32,8 @@ public class PlanetoidGen extends JavaPlugin {
       CONFIG_DEFAULTS.put("planetoids.alwaysnight", Boolean.valueOf(false));
       CONFIG_DEFAULTS.put("planetoids.weather", Boolean.valueOf(false));
       CONFIG_DEFAULTS.put("planetoids.commands.pltp", Boolean.valueOf(true));
+      CONFIG_DEFAULTS.put("planetoids.disablemonsters", Boolean.valueOf(true));
+      CONFIG_DEFAULTS.put("planetoids.disableanimals", Boolean.valueOf(false));
       CONFIG_DEFAULTS.put("planetoids.seed", getServer().getWorlds().get(0).getSeed());
       CONFIG_DEFAULTS.put("planetoids.planets.density", 2000);
       CONFIG_DEFAULTS.put("planetoids.planets.minSize", 4);
@@ -47,7 +49,7 @@ public class PlanetoidGen extends JavaPlugin {
       ArrayList<String> shells = new ArrayList<String>();
 
       shells.add(Material.STONE.toString() + "-1.0");
-      shells.add(Material.DIRT.toString() + "-1.0");
+      shells.add(Material.GRASS.toString() + "-1.0");
       shells.add(Material.LEAVES.toString() + "-0.9");
       shells.add(Material.ICE.toString() + "-0.9");
       shells.add(Material.SNOW_BLOCK.toString() + "-0.9");
@@ -73,6 +75,7 @@ public class PlanetoidGen extends JavaPlugin {
       cores.add(Material.SAND.toString() + "-1.0");
       cores.add(Material.BEDROCK.toString() + "-0.5");
       cores.add(Material.AIR.toString() + "-1.0");
+      cores.add(Material.DIRT.toString() + "-1.0");
 
       CONFIG_DEFAULTS.put("planetoids.planets.blocks.cores", cores);
       CONFIG_DEFAULTS.put("planetoids.planets.blocks.shells", shells);
@@ -143,6 +146,14 @@ public class PlanetoidGen extends JavaPlugin {
 
          if (!planetConfig.getBoolean("planetoids.weather", false)) {
             planetoids.setWeatherDuration(0);
+         }
+
+         if (planetConfig.getBoolean("planetoids.disablemonsters", false)) {
+            planetoids.setSpawnFlags(false, planetoids.getAllowAnimals());
+         }
+
+         if (planetConfig.getBoolean("planetoids.disableanimals", false)) {
+            planetoids.setSpawnFlags(planetoids.getAllowMonsters(), false);
          }
 
          scheduler = getServer().getScheduler();
