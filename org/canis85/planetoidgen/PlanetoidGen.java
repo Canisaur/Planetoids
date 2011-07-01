@@ -35,7 +35,7 @@ public class PlanetoidGen extends JavaPlugin {
       CONFIG_DEFAULTS.put("planetoids.disablemonsters", Boolean.valueOf(true));
       CONFIG_DEFAULTS.put("planetoids.disableanimals", Boolean.valueOf(false));
       CONFIG_DEFAULTS.put("planetoids.seed", getServer().getWorlds().get(0).getSeed());
-      CONFIG_DEFAULTS.put("planetoids.planets.density", 2000);
+      CONFIG_DEFAULTS.put("planetoids.planets.density", 750);
       CONFIG_DEFAULTS.put("planetoids.planets.minSize", 4);
       CONFIG_DEFAULTS.put("planetoids.planets.maxSize", 20);
       CONFIG_DEFAULTS.put("planetoids.planets.minDistance", 10);
@@ -49,7 +49,7 @@ public class PlanetoidGen extends JavaPlugin {
       ArrayList<String> shells = new ArrayList<String>();
 
       shells.add(Material.STONE.toString() + "-1.0");
-      shells.add(Material.GRASS.toString() + "-1.0");
+      shells.add(Material.DIRT.toString() + "-1.0");
       shells.add(Material.LEAVES.toString() + "-0.9");
       shells.add(Material.ICE.toString() + "-0.9");
       shells.add(Material.SNOW_BLOCK.toString() + "-0.9");
@@ -120,6 +120,7 @@ public class PlanetoidGen extends JavaPlugin {
             }
             planetConfig.save();
          } catch (Exception ex) {
+            System.err.println("[PLANETOIDS] Problem loading config file:");
             ex.printStackTrace();
             return false;
          }
@@ -141,7 +142,6 @@ public class PlanetoidGen extends JavaPlugin {
          //Create chunk generator
          PGChunkGenerator pgGen = new PGChunkGenerator(planetConfig, this);
 
-         // EXAMPLE: Custom code, here we just output some info so we can check all is well
          planetoids = getServer().createWorld(worldName, Environment.NORMAL, (long) planetConfig.getDouble("planetoids.seed", 0.0), pgGen);
 
          if (!planetConfig.getBoolean("planetoids.weather", false)) {

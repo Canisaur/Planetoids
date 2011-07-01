@@ -33,7 +33,7 @@ public class PGChunkGenerator extends ChunkGenerator {
    private Map<Material, Float> allowedCores;
    private Map<Point, List<Planetoid>> cache;
    private Configuration planetConfig;
-   private static final int SYSTEM_SIZE = 100;
+   private static final int SYSTEM_SIZE = 50;
    private long seed;   //Seed for generating planetoids
    private int density; //Number of planetoids it will try to create per "system"
    private int minSize; //Minimum radius
@@ -77,7 +77,7 @@ public class PGChunkGenerator extends ChunkGenerator {
       this.plugin = plugin;
       this.planetConfig = planetConfig;
       this.seed = (long) planetConfig.getDouble("planetoids.seed", plugin.getServer().getWorlds().get(0).getSeed());
-      this.density = planetConfig.getInt("planetoids.planets.density", 2000);
+      this.density = planetConfig.getInt("planetoids.planets.density", 750);
       minSize = planetConfig.getInt("planetoids.planets.minSize", 4);
       maxSize = planetConfig.getInt("planetoids.planets.maxSize", 20);
       minDistance = planetConfig.getInt("planetoids.planets.minDistance", 10);
