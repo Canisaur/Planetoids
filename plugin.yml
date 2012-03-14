@@ -1,6 +1,6 @@
 name: Planetoids
 main: org.canis85.planetoidgen.PlanetoidGen
-version: 1.2.2
+version: 1.2.3
 description: Creates a world full of planets.
 author: Canis85
 commands:

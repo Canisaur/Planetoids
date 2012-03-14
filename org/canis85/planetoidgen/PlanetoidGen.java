@@ -81,12 +81,10 @@ public class PlanetoidGen extends JavaPlugin {
 
    @Override
    public void onDisable() {
-      // TODO: Place any custom disable code here
       if (worldName != null) {
          getServer().unloadWorld(worldName, true);
       }
 
-      // EXAMPLE: Custom code, here we just output some info so we can check all is well
       PluginDescriptionFile pdfFile = this.getDescription();
       System.out.println(pdfFile.getName() + " unloaded.");
    }
