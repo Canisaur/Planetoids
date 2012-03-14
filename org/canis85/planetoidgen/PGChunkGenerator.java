@@ -18,7 +18,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.util.config.Configuration;
 
 /**
  * Generates a Planetoids world.
@@ -32,7 +31,6 @@ public class PGChunkGenerator extends ChunkGenerator {
    private Map<Material, Float> allowedShells;
    private Map<Material, Float> allowedCores;
    private Map<Point, List<Planetoid>> cache;
-   private Configuration planetConfig;
    private static final int SYSTEM_SIZE = 50;
    private long seed;   //Seed for generating planetoids
    private int density; //Number of planetoids it will try to create per "system"
@@ -48,7 +46,7 @@ public class PGChunkGenerator extends ChunkGenerator {
    private void loadAllowedBlocks() {
       allowedCores = new EnumMap<Material, Float>(Material.class);
       allowedShells = new EnumMap<Material, Float>(Material.class);
-      for (String s : planetConfig.getStringList("planetoids.planets.blocks.cores", null)) {
+      for (String s : plugin.getConfig().getStringList("planetoids.planets.blocks.cores")) {
          String[] sSplit = s.split("-");
          Material newMat = Material.matchMaterial(sSplit[0]);
          if (newMat.isBlock()) {
@@ -60,7 +58,7 @@ public class PGChunkGenerator extends ChunkGenerator {
          }
       }
 
-      for (String s : planetConfig.getStringList("planetoids.planets.blocks.shells", null)) {
+      for (String s : plugin.getConfig().getStringList("planetoids.planets.blocks.shells")) {
          String[] sSplit = s.split("-");
          Material newMat = Material.matchMaterial(sSplit[0]);
          if (newMat.isBlock()) {
@@ -73,18 +71,17 @@ public class PGChunkGenerator extends ChunkGenerator {
       }
    }
 
-   public PGChunkGenerator(Configuration planetConfig, Plugin plugin) {
+   public PGChunkGenerator(Plugin plugin) {
       this.plugin = plugin;
-      this.planetConfig = planetConfig;
-      this.seed = (long) planetConfig.getDouble("planetoids.seed", plugin.getServer().getWorlds().get(0).getSeed());
-      this.density = planetConfig.getInt("planetoids.planets.density", 750);
-      minSize = planetConfig.getInt("planetoids.planets.minSize", 4);
-      maxSize = planetConfig.getInt("planetoids.planets.maxSize", 20);
-      minDistance = planetConfig.getInt("planetoids.planets.minDistance", 10);
-      floorBlock = Material.matchMaterial(planetConfig.getString("planetoids.planets.floorBlock", "STATIONARY_WATER"));
-      this.floorHeight = planetConfig.getInt("planetoids.planets.floorHeight", 4);
-      minShellSize = planetConfig.getInt("planetoids.planets.minShellSize", 3);
-      maxShellSize = planetConfig.getInt("planetoids.planets.maxShellSize", 5);
+      this.seed = (long) plugin.getConfig().getDouble("planetoids.seed", plugin.getServer().getWorlds().get(0).getSeed());
+      this.density = plugin.getConfig().getInt("planetoids.planets.density", 750);
+      minSize = plugin.getConfig().getInt("planetoids.planets.minSize", 4);
+      maxSize = plugin.getConfig().getInt("planetoids.planets.maxSize", 20);
+      minDistance = plugin.getConfig().getInt("planetoids.planets.minDistance", 10);
+      floorBlock = Material.matchMaterial(plugin.getConfig().getString("planetoids.planets.floorBlock", "STATIONARY_WATER"));
+      this.floorHeight = plugin.getConfig().getInt("planetoids.planets.floorHeight", 4);
+      minShellSize = plugin.getConfig().getInt("planetoids.planets.minShellSize", 3);
+      maxShellSize = plugin.getConfig().getInt("planetoids.planets.maxShellSize", 5);
 
       loadAllowedBlocks();
 

@@ -1,16 +1,15 @@
 package org.canis85.planetoidgen;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
+import org.bukkit.WorldCreator;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
-import org.bukkit.util.config.Configuration;
 
 /**
  * Sample plugin for Bukkit
@@ -20,28 +19,28 @@ import org.bukkit.util.config.Configuration;
 public class PlanetoidGen extends JavaPlugin {
 
    String worldName = null;
-   Configuration planetConfig;
    private final Map<String, Object> CONFIG_DEFAULTS = new HashMap<String, Object>();
    private BukkitScheduler scheduler;
    public static World planetoids = null;
 
    private void loadDefaults() {
-      CONFIG_DEFAULTS.put("planetoids.worldname", "Planetoids");
-      CONFIG_DEFAULTS.put("planetoids.alwaysnight", Boolean.valueOf(false));
-      CONFIG_DEFAULTS.put("planetoids.weather", Boolean.valueOf(false));
-      CONFIG_DEFAULTS.put("planetoids.commands.pltp", Boolean.valueOf(true));
-      CONFIG_DEFAULTS.put("planetoids.disablemonsters", Boolean.valueOf(true));
-      CONFIG_DEFAULTS.put("planetoids.disableanimals", Boolean.valueOf(false));
-      CONFIG_DEFAULTS.put("planetoids.seed", getServer().getWorlds().get(0).getSeed());
-      CONFIG_DEFAULTS.put("planetoids.planets.density", 750);
-      CONFIG_DEFAULTS.put("planetoids.planets.minSize", 4);
-      CONFIG_DEFAULTS.put("planetoids.planets.maxSize", 20);
-      CONFIG_DEFAULTS.put("planetoids.planets.minDistance", 10);
-      CONFIG_DEFAULTS.put("planetoids.planets.minShellSize", 3);
-      CONFIG_DEFAULTS.put("planetoids.planets.maxShellSize", 5);
-      CONFIG_DEFAULTS.put("planetoids.planets.floorBlock", "STATIONARY_WATER");
-      CONFIG_DEFAULTS.put("planetoids.planets.floorHeight", 0);
-      CONFIG_DEFAULTS.put("planetoids.planets.bedrock", Boolean.valueOf(false));
+      getConfig().options().copyDefaults(true);
+      getConfig().addDefault("planetoids.worldname", "Planetoids");
+      getConfig().addDefault("planetoids.alwaysnight", Boolean.valueOf(false));
+      getConfig().addDefault("planetoids.weather", Boolean.valueOf(false));
+      getConfig().addDefault("planetoids.commands.pltp", Boolean.valueOf(true));
+      getConfig().addDefault("planetoids.disablemonsters", Boolean.valueOf(true));
+      getConfig().addDefault("planetoids.disableanimals", Boolean.valueOf(false));
+      getConfig().addDefault("planetoids.seed", getServer().getWorlds().get(0).getSeed());
+      getConfig().addDefault("planetoids.planets.density", 750);
+      getConfig().addDefault("planetoids.planets.minSize", 4);
+      getConfig().addDefault("planetoids.planets.maxSize", 20);
+      getConfig().addDefault("planetoids.planets.minDistance", 10);
+      getConfig().addDefault("planetoids.planets.minShellSize", 3);
+      getConfig().addDefault("planetoids.planets.maxShellSize", 5);
+      getConfig().addDefault("planetoids.planets.floorBlock", "STATIONARY_WATER");
+      getConfig().addDefault("planetoids.planets.floorHeight", 0);
+      getConfig().addDefault("planetoids.planets.bedrock", Boolean.valueOf(false));
 
       ArrayList<String> cores = new ArrayList<String>();
       ArrayList<String> shells = new ArrayList<String>();
@@ -75,10 +74,12 @@ public class PlanetoidGen extends JavaPlugin {
       cores.add(Material.AIR.toString() + "-1.0");
       cores.add(Material.DIRT.toString() + "-1.0");
 
-      CONFIG_DEFAULTS.put("planetoids.planets.blocks.cores", cores);
-      CONFIG_DEFAULTS.put("planetoids.planets.blocks.shells", shells);
+      getConfig().addDefault("planetoids.planets.blocks.cores", cores);
+      getConfig().addDefault("planetoids.planets.blocks.shells", shells);
+      saveConfig();
    }
 
+   @Override
    public void onDisable() {
       // TODO: Place any custom disable code here
       if (worldName != null) {
@@ -92,71 +93,75 @@ public class PlanetoidGen extends JavaPlugin {
 
    private boolean loadSettings() {
       loadDefaults();
-      File plConfigFile = new File(getDataFolder(), "settings.yml");
-      if (plConfigFile.exists()) {
-         planetConfig = new Configuration(plConfigFile);
-         planetConfig.load();
-         planetConfig.setHeader("#Planetoids configuration file");
-         boolean refreshConfig = false;
-         for (String prop : CONFIG_DEFAULTS.keySet()) {
-            if (planetConfig.getProperty(prop) == null) {
-               refreshConfig = true;
-               planetConfig.setProperty(prop, CONFIG_DEFAULTS.get(prop));
-            }
-         }
-         if (refreshConfig) {
-            planetConfig.save();
-         }
-      } else {
-         try {
-            getDataFolder().mkdirs();
-            plConfigFile.createNewFile();
-            planetConfig = new Configuration(plConfigFile);
-            planetConfig.setHeader("#Planetoids configuration file");
-            for (String s : CONFIG_DEFAULTS.keySet()) {
-               planetConfig.setProperty(s, CONFIG_DEFAULTS.get(s));
-            }
-            planetConfig.save();
-         } catch (Exception ex) {
-            System.err.println("[PLANETOIDS] Problem loading config file:");
-            ex.printStackTrace();
-            return false;
-         }
-      }
+//      if (plConfigFile.exists()) {
+//         planetConfig = YamlConfiguration.loadConfiguration(plConfigFile);
+//         planetConfig.setHeader("#Planetoids configuration file");
+//         boolean refreshConfig = false;
+//         for (String prop : CONFIG_DEFAULTS.keySet()) {
+//            if (planetConfig.getProperty(prop) == null) {
+//               refreshConfig = true;
+//               planetConfig.setProperty(prop, CONFIG_DEFAULTS.get(prop));
+//            }
+//         }
+//         if (refreshConfig) {
+//            planetConfig.save();
+//         }
+//      } else {
+//         try {
+//            getDataFolder().mkdirs();
+//            plConfigFile.createNewFile();
+//            planetConfig = new Configuration(plConfigFile);
+//            planetConfig.setHeader("#Planetoids configuration file");
+//            for (String s : CONFIG_DEFAULTS.keySet()) {
+//               planetConfig.setProperty(s, CONFIG_DEFAULTS.get(s));
+//            }
+//            planetConfig.save(plConfigFile);
+//         } catch (Exception ex) {
+//            System.err.println("[PLANETOIDS] Problem loading config file:");
+//            ex.printStackTrace();
+//            return false;
+//         }
+//      }
       return true;
    }
 
+   @Override
    public void onEnable() {
       boolean settingsLoaded = loadSettings();
 
       PluginDescriptionFile pdfFile = this.getDescription();
       if (settingsLoaded) {
-         worldName = planetConfig.getString("planetoids.worldname", "Planetoids");
+         worldName = getConfig().getString("planetoids.worldname", "Planetoids");
 
-         if (planetConfig.getBoolean("planetoids.commands.pltp", true)) {
+         if (getConfig().getBoolean("planetoids.commands.pltp", true)) {
             getCommand("pltp").setExecutor(new PGPltpCommand(this, worldName));
          }
 
          //Create chunk generator
-         PGChunkGenerator pgGen = new PGChunkGenerator(planetConfig, this);
+         PGChunkGenerator pgGen = new PGChunkGenerator(this);
+         
+         WorldCreator wc = new WorldCreator(worldName);
+         wc.seed((long) getConfig().getDouble("planetoids.seed", 0.0));
+         wc.environment(Environment.NORMAL);
+         wc.generator(pgGen);
 
-         planetoids = getServer().createWorld(worldName, Environment.NORMAL, (long) planetConfig.getDouble("planetoids.seed", 0.0), pgGen);
+         planetoids = getServer().createWorld(wc);
 
-         if (!planetConfig.getBoolean("planetoids.weather", false)) {
+         if (!getConfig().getBoolean("planetoids.weather", false)) {
             planetoids.setWeatherDuration(0);
          }
 
-         if (planetConfig.getBoolean("planetoids.disablemonsters", false)) {
+         if (getConfig().getBoolean("planetoids.disablemonsters", false)) {
             planetoids.setSpawnFlags(false, planetoids.getAllowAnimals());
          }
 
-         if (planetConfig.getBoolean("planetoids.disableanimals", false)) {
+         if (getConfig().getBoolean("planetoids.disableanimals", false)) {
             planetoids.setSpawnFlags(planetoids.getAllowMonsters(), false);
          }
 
          scheduler = getServer().getScheduler();
          PGRunnable task = new PGRunnable();
-         if (planetConfig.getBoolean("planetoids.alwaysnight", true)) {
+         if (getConfig().getBoolean("planetoids.alwaysnight", true)) {
             scheduler.scheduleSyncRepeatingTask(this, task, 60L, 8399L);
          }
 
