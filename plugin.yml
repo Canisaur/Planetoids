@@ -1,9 +1,9 @@
 name: Planetoids
 main: org.canis85.planetoidgen.PlanetoidGen
-version: 1.2.3
+version: 1.2.4
 description: Creates a world full of planets.
 author: Canis85
 commands:
     pltp:
-        description: Moves the player to the planetoids area
+        description: Moves the player to/from the planetoids area
         usage: /pltp

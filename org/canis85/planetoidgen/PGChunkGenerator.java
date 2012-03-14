@@ -42,6 +42,7 @@ public class PGChunkGenerator extends ChunkGenerator {
    private int maxShellSize;  //Maximum shell thickness
    private int minShellSize;  //Minimum shell thickness, should be at least 3
    private Plugin plugin;     //ref to plugin
+   private boolean bedrockFloor; //if true and floorHeight > 0, the very bottom will be bedrock
 
    private void loadAllowedBlocks() {
       allowedCores = new EnumMap<Material, Float>(Material.class);
@@ -78,10 +79,11 @@ public class PGChunkGenerator extends ChunkGenerator {
       minSize = plugin.getConfig().getInt("planetoids.planets.minSize", 4);
       maxSize = plugin.getConfig().getInt("planetoids.planets.maxSize", 20);
       minDistance = plugin.getConfig().getInt("planetoids.planets.minDistance", 10);
-      floorBlock = Material.matchMaterial(plugin.getConfig().getString("planetoids.planets.floorBlock", "STATIONARY_WATER"));
-      this.floorHeight = plugin.getConfig().getInt("planetoids.planets.floorHeight", 4);
+      floorBlock = Material.matchMaterial(plugin.getConfig().getString("planetoids.planets.floorBlock", "GRASS"));
+      this.floorHeight = plugin.getConfig().getInt("planetoids.planets.floorHeight", 0);
       minShellSize = plugin.getConfig().getInt("planetoids.planets.minShellSize", 3);
       maxShellSize = plugin.getConfig().getInt("planetoids.planets.maxShellSize", 5);
+      bedrockFloor = plugin.getConfig().getBoolean("planetoids.planets.bedrock", true);
 
       loadAllowedBlocks();
 
@@ -232,7 +234,7 @@ public class PGChunkGenerator extends ChunkGenerator {
               i++) {
          for (int j = 0; j < 16; j++) {
             for (int k = 0; k < 16; k++) {
-               if (i == 0) {
+               if (i == 0 && bedrockFloor) {
                   retVal[j * 2048 + k * 128 + i] = (byte) Material.BEDROCK.getId();
                } else {
                   retVal[j * 2048 + k * 128 + i] = (byte) floorBlock.getId();

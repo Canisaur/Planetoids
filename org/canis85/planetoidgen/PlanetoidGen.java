@@ -38,7 +38,7 @@ public class PlanetoidGen extends JavaPlugin {
       getConfig().addDefault("planetoids.planets.minDistance", 10);
       getConfig().addDefault("planetoids.planets.minShellSize", 3);
       getConfig().addDefault("planetoids.planets.maxShellSize", 5);
-      getConfig().addDefault("planetoids.planets.floorBlock", "STATIONARY_WATER");
+      getConfig().addDefault("planetoids.planets.floorBlock", "GRASS");
       getConfig().addDefault("planetoids.planets.floorHeight", 0);
       getConfig().addDefault("planetoids.planets.bedrock", Boolean.valueOf(false));
 
