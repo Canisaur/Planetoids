@@ -148,14 +148,8 @@ public class PlanetoidGen extends JavaPlugin {
          if (!getConfig().getBoolean("planetoids.weather", false)) {
             planetoids.setWeatherDuration(0);
          }
-
-         if (getConfig().getBoolean("planetoids.disablemonsters", false)) {
-            planetoids.setSpawnFlags(false, planetoids.getAllowAnimals());
-         }
-
-         if (getConfig().getBoolean("planetoids.disableanimals", false)) {
-            planetoids.setSpawnFlags(planetoids.getAllowMonsters(), false);
-         }
+         
+         planetoids.setSpawnFlags(!getConfig().getBoolean("planetoids.disablemonsters", false), !getConfig().getBoolean("planetoids.disableanimals", false));
 
          scheduler = getServer().getScheduler();
          PGRunnable task = new PGRunnable();
