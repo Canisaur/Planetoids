@@ -12,9 +12,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
 /**
- * Sample plugin for Bukkit
+ * Planetoids server mod for Minecraft
  *
- * @author Dinnerbone
+ * @author Canis85
  */
 public class PlanetoidGen extends JavaPlugin {
 

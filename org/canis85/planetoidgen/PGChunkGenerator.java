@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +15,7 @@ import java.util.Random;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.Plugin;
 
@@ -91,10 +91,10 @@ public class PGChunkGenerator extends ChunkGenerator {
    }
 
    @Override
-   public byte[] generate(World world, Random random, int x, int z) {
-      byte[] retVal = new byte[32768];
-
-      Arrays.fill(retVal, (byte) 0);
+   public short[][] generateExtBlockSections(World world, Random random, int x, int z, BiomeGrid biomes) {
+      world.setBiome(x, z, Biome.SKY);
+      int height = world.getMaxHeight();
+      short[][] retVal = new short[height / 16][];
 
       int sysX;
       if (x >= 0) {
@@ -136,7 +136,7 @@ public class PGChunkGenerator extends ChunkGenerator {
             }
          } else {
             //generate, save, and cache
-            curSystem = generatePlanets(sysX, sysZ);
+            curSystem = generatePlanets(sysX, sysZ, world.getMaxHeight());
             try {
                systemFile.createNewFile();
                FileOutputStream fos = new FileOutputStream(systemFile);
@@ -197,7 +197,11 @@ public class PGChunkGenerator extends ChunkGenerator {
                      int zRadius = (int) Math.ceil(Math.sqrt((radius * radius) - (zDistFromCenter * zDistFromCenter)));
                      for (int curY = -zRadius; curY <= zRadius; curY++) {
                         int blkY = curPl.yPos + curY;
-                        retVal[(blkX * 16 + blkZ) * 128 + blkY] = (byte) curPl.shellBlk.getId();
+                        //retVal[(blkX * 16 + blkZ) * 128 + blkY] = (byte) curPl.shellBlk.getId();
+                        if (retVal[blkY >> 4] == null) {
+                           retVal[blkY >> 4] = new short[4096];
+                        }
+                        retVal[blkY >> 4][((blkY & 0xF) << 8) | (blkZ << 4) | blkX] = (byte) curPl.shellBlk.getId();
                      }
                   }
                }
@@ -220,7 +224,11 @@ public class PGChunkGenerator extends ChunkGenerator {
                         int zRadius = (int) Math.ceil(Math.sqrt((radius * radius) - (zDistFromCenter * zDistFromCenter)));
                         for (int curY = -zRadius; curY <= zRadius; curY++) {
                            int blkY = curPl.yPos + curY;
-                           retVal[(blkX * 16 + blkZ) * 128 + blkY] = (byte) curPl.coreBlk.getId();
+                           //retVal[(blkX * 16 + blkZ) * 128 + blkY] = (byte) curPl.coreBlk.getId();
+                           if (retVal[blkY >> 4] == null) {
+                              retVal[blkY >> 4] = new short[4096];
+                           }
+                           retVal[blkY >> 4][((blkY & 0xF) << 8) | (blkZ << 4) | blkX] = (byte) curPl.coreBlk.getId();
                         }
                      }
                   }
@@ -229,15 +237,18 @@ public class PGChunkGenerator extends ChunkGenerator {
          }
       }
       //Fill in the floor
-      for (int i = 0;
-              i < floorHeight;
-              i++) {
+      if (floorHeight > 0 && retVal[0] == null) {
+         retVal[0] = new short[4096];
+      }
+      for (int i = 0; i < floorHeight; i++) {
          for (int j = 0; j < 16; j++) {
             for (int k = 0; k < 16; k++) {
                if (i == 0 && bedrockFloor) {
-                  retVal[j * 2048 + k * 128 + i] = (byte) Material.BEDROCK.getId();
+                  //retVal[j * 2048 + k * 128 + i] = (byte) Material.BEDROCK.getId();
+                  retVal[i >> 4][((i & 0xF) << 8) | (j << 4) | k] = (byte) Material.BEDROCK.getId();
                } else {
-                  retVal[j * 2048 + k * 128 + i] = (byte) floorBlock.getId();
+                  //retVal[j * 2048 + k * 128 + i] = (byte) floorBlock.getId();
+                  retVal[i >> 4][((i & 0xF) << 8) | (j << 4) | k] = (byte) floorBlock.getId();
                }
             }
          }
@@ -255,7 +266,7 @@ public class PGChunkGenerator extends ChunkGenerator {
       return new Location(world, 7, 77, 7);
    }
 
-   private List<Planetoid> generatePlanets(int x, int z) {
+   private List<Planetoid> generatePlanets(int x, int z, int height) {
       List<Planetoid> planetoids = new ArrayList<Planetoid>();
 
       //If x and Z are zero, generate a log/leaf planet close to 0,0
@@ -313,7 +324,7 @@ public class PGChunkGenerator extends ChunkGenerator {
                curPl.xPos = curTry;
             }
          }
-         curPl.yPos = rand.nextInt(128 - curPl.radius * 2 - floorHeight) + curPl.radius;
+         curPl.yPos = rand.nextInt(height - curPl.radius * 2 - floorHeight) + curPl.radius;
          curPl.zPos = -1;
          while (curPl.zPos == -1) {
             int curTry = rand.nextInt(SYSTEM_SIZE * 16);

@@ -1,8 +1,9 @@
 package org.canis85.planetoidgen;
 
 /**
+ * Keeps the time frozen at night
  *
- * @author canis85
+ * @author Canis85
  */
 public class PGRunnable implements Runnable {
 
