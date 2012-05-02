@@ -74,7 +74,7 @@ public class PGChunkGenerator extends ChunkGenerator {
 
    public PGChunkGenerator(Plugin plugin) {
       this.plugin = plugin;
-      this.seed = (long) plugin.getConfig().getDouble("planetoids.seed", plugin.getServer().getWorlds().get(0).getSeed());
+      this.seed = (long) plugin.getConfig().getLong("planetoids.seed", (long)Math.random());
       this.density = plugin.getConfig().getInt("planetoids.planets.density", 750);
       minSize = plugin.getConfig().getInt("planetoids.planets.minSize", 4);
       maxSize = plugin.getConfig().getInt("planetoids.planets.maxSize", 20);

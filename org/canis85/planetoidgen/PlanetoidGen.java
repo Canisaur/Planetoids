@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.WorldCreator;
+import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -25,13 +26,14 @@ public class PlanetoidGen extends JavaPlugin {
 
    private void loadDefaults() {
       getConfig().options().copyDefaults(true);
+      getConfig().addDefault("planetoids.autocreateworld", Boolean.valueOf(true));
       getConfig().addDefault("planetoids.worldname", "Planetoids");
       getConfig().addDefault("planetoids.alwaysnight", Boolean.valueOf(false));
       getConfig().addDefault("planetoids.weather", Boolean.valueOf(false));
       getConfig().addDefault("planetoids.commands.pltp", Boolean.valueOf(true));
       getConfig().addDefault("planetoids.disablemonsters", Boolean.valueOf(true));
       getConfig().addDefault("planetoids.disableanimals", Boolean.valueOf(false));
-      getConfig().addDefault("planetoids.seed", getServer().getWorlds().get(0).getSeed());
+      getConfig().addDefault("planetoids.seed", (long)Math.random());
       getConfig().addDefault("planetoids.planets.density", 750);
       getConfig().addDefault("planetoids.planets.minSize", 4);
       getConfig().addDefault("planetoids.planets.maxSize", 20);
@@ -89,77 +91,54 @@ public class PlanetoidGen extends JavaPlugin {
       System.out.println(pdfFile.getName() + " unloaded.");
    }
 
-   private boolean loadSettings() {
-      loadDefaults();
-//      if (plConfigFile.exists()) {
-//         planetConfig = YamlConfiguration.loadConfiguration(plConfigFile);
-//         planetConfig.setHeader("#Planetoids configuration file");
-//         boolean refreshConfig = false;
-//         for (String prop : CONFIG_DEFAULTS.keySet()) {
-//            if (planetConfig.getProperty(prop) == null) {
-//               refreshConfig = true;
-//               planetConfig.setProperty(prop, CONFIG_DEFAULTS.get(prop));
-//            }
-//         }
-//         if (refreshConfig) {
-//            planetConfig.save();
-//         }
-//      } else {
-//         try {
-//            getDataFolder().mkdirs();
-//            plConfigFile.createNewFile();
-//            planetConfig = new Configuration(plConfigFile);
-//            planetConfig.setHeader("#Planetoids configuration file");
-//            for (String s : CONFIG_DEFAULTS.keySet()) {
-//               planetConfig.setProperty(s, CONFIG_DEFAULTS.get(s));
-//            }
-//            planetConfig.save(plConfigFile);
-//         } catch (Exception ex) {
-//            System.err.println("[PLANETOIDS] Problem loading config file:");
-//            ex.printStackTrace();
-//            return false;
-//         }
-//      }
-      return true;
-   }
-
    @Override
    public void onEnable() {
-      boolean settingsLoaded = loadSettings();
-
+      loadDefaults();
       PluginDescriptionFile pdfFile = this.getDescription();
-      if (settingsLoaded) {
-         worldName = getConfig().getString("planetoids.worldname", "Planetoids");
-
-         if (getConfig().getBoolean("planetoids.commands.pltp", true)) {
-            getCommand("pltp").setExecutor(new PGPltpCommand(this, worldName));
+      scheduler = getServer().getScheduler();
+      
+      if (getConfig().getBoolean("planetoids.autocreateworld")) {
+         if (scheduler.scheduleSyncDelayedTask(this, new Runnable() { public void run() {
+            createWorld();
+         }}) == -1) {
+            System.out.println(pdfFile.getName() + ": Unable to schedule world auto-creation");
          }
+      }
 
-         //Create chunk generator
-         PGChunkGenerator pgGen = new PGChunkGenerator(this);
-         
-         WorldCreator wc = new WorldCreator(worldName);
-         wc.seed((long) getConfig().getDouble("planetoids.seed", 0.0));
-         wc.environment(Environment.NORMAL);
-         wc.generator(pgGen);
+      System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
+   }
+   
+   @Override
+   public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+        return new PGChunkGenerator(this);
+    }
+   
+   public void createWorld() {
+      worldName = getConfig().getString("planetoids.worldname", "Planetoids");
 
-         planetoids = getServer().createWorld(wc);
+      if (getConfig().getBoolean("planetoids.commands.pltp", true)) {
+         getCommand("pltp").setExecutor(new PGPltpCommand(this, worldName));
+      }
 
-         if (!getConfig().getBoolean("planetoids.weather", false)) {
-            planetoids.setWeatherDuration(0);
-         }
-         
-         planetoids.setSpawnFlags(!getConfig().getBoolean("planetoids.disablemonsters", false), !getConfig().getBoolean("planetoids.disableanimals", false));
+      //Create chunk generator
+      PGChunkGenerator pgGen = new PGChunkGenerator(this);
 
-         scheduler = getServer().getScheduler();
-         PGRunnable task = new PGRunnable();
-         if (getConfig().getBoolean("planetoids.alwaysnight", true)) {
-            scheduler.scheduleSyncRepeatingTask(this, task, 60L, 8399L);
-         }
+      WorldCreator wc = new WorldCreator(worldName);
+      wc.seed((long) getConfig().getLong("planetoids.seed"));
+      wc.environment(Environment.NORMAL);
+      wc.generator(pgGen);
 
-         System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " is enabled!");
-      } else {
-         System.out.println(pdfFile.getName() + " version " + pdfFile.getVersion() + " unable to load!  Check settings file.");
+      planetoids = getServer().createWorld(wc);
+
+      if (!getConfig().getBoolean("planetoids.weather", false)) {
+         planetoids.setWeatherDuration(0);
+      }
+
+      planetoids.setSpawnFlags(!getConfig().getBoolean("planetoids.disablemonsters", false), !getConfig().getBoolean("planetoids.disableanimals", false));
+      
+      PGRunnable task = new PGRunnable();
+      if (getConfig().getBoolean("planetoids.alwaysnight", true)) {
+         scheduler.scheduleSyncRepeatingTask(this, task, 60L, 8399L);
       }
    }
 }
