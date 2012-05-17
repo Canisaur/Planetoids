@@ -74,16 +74,16 @@ public class PGChunkGenerator extends ChunkGenerator {
 
    public PGChunkGenerator(Plugin plugin) {
       this.plugin = plugin;
-      this.seed = (long) plugin.getConfig().getLong("planetoids.seed", (long)Math.random());
-      this.density = plugin.getConfig().getInt("planetoids.planets.density", 750);
-      minSize = plugin.getConfig().getInt("planetoids.planets.minSize", 4);
-      maxSize = plugin.getConfig().getInt("planetoids.planets.maxSize", 20);
-      minDistance = plugin.getConfig().getInt("planetoids.planets.minDistance", 10);
-      floorBlock = Material.matchMaterial(plugin.getConfig().getString("planetoids.planets.floorBlock", "GRASS"));
-      this.floorHeight = plugin.getConfig().getInt("planetoids.planets.floorHeight", 0);
-      minShellSize = plugin.getConfig().getInt("planetoids.planets.minShellSize", 3);
-      maxShellSize = plugin.getConfig().getInt("planetoids.planets.maxShellSize", 5);
-      bedrockFloor = plugin.getConfig().getBoolean("planetoids.planets.bedrock", true);
+      this.seed = (long) plugin.getConfig().getLong("planetoids.seed");
+      this.density = plugin.getConfig().getInt("planetoids.planets.density");
+      minSize = plugin.getConfig().getInt("planetoids.planets.minSize");
+      maxSize = plugin.getConfig().getInt("planetoids.planets.maxSize");
+      minDistance = plugin.getConfig().getInt("planetoids.planets.minDistance");
+      floorBlock = Material.matchMaterial(plugin.getConfig().getString("planetoids.planets.floorBlock"));
+      this.floorHeight = plugin.getConfig().getInt("planetoids.planets.floorHeight");
+      minShellSize = plugin.getConfig().getInt("planetoids.planets.minShellSize");
+      maxShellSize = plugin.getConfig().getInt("planetoids.planets.maxShellSize");
+      bedrockFloor = plugin.getConfig().getBoolean("planetoids.planets.bedrock");
 
       loadAllowedBlocks();
 

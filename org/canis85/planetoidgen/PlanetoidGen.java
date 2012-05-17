@@ -3,6 +3,7 @@ package org.canis85.planetoidgen;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -23,6 +24,7 @@ public class PlanetoidGen extends JavaPlugin {
    private final Map<String, Object> CONFIG_DEFAULTS = new HashMap<String, Object>();
    private BukkitScheduler scheduler;
    public static World planetoids = null;
+   public static Random seedPod = new Random();
 
    private void loadDefaults() {
       getConfig().options().copyDefaults(true);
@@ -33,7 +35,7 @@ public class PlanetoidGen extends JavaPlugin {
       getConfig().addDefault("planetoids.commands.pltp", Boolean.valueOf(true));
       getConfig().addDefault("planetoids.disablemonsters", Boolean.valueOf(true));
       getConfig().addDefault("planetoids.disableanimals", Boolean.valueOf(false));
-      getConfig().addDefault("planetoids.seed", (long)Math.random());
+      getConfig().addDefault("planetoids.seed", seedPod.nextLong());
       getConfig().addDefault("planetoids.planets.density", 750);
       getConfig().addDefault("planetoids.planets.minSize", 4);
       getConfig().addDefault("planetoids.planets.maxSize", 20);
@@ -116,7 +118,7 @@ public class PlanetoidGen extends JavaPlugin {
    public void createWorld() {
       worldName = getConfig().getString("planetoids.worldname", "Planetoids");
 
-      if (getConfig().getBoolean("planetoids.commands.pltp", true)) {
+      if (getConfig().getBoolean("planetoids.commands.pltp")) {
          getCommand("pltp").setExecutor(new PGPltpCommand(this, worldName));
       }
 
@@ -130,14 +132,14 @@ public class PlanetoidGen extends JavaPlugin {
 
       planetoids = getServer().createWorld(wc);
 
-      if (!getConfig().getBoolean("planetoids.weather", false)) {
+      if (!getConfig().getBoolean("planetoids.weather")) {
          planetoids.setWeatherDuration(0);
       }
 
-      planetoids.setSpawnFlags(!getConfig().getBoolean("planetoids.disablemonsters", false), !getConfig().getBoolean("planetoids.disableanimals", false));
+      planetoids.setSpawnFlags(!getConfig().getBoolean("planetoids.disablemonsters"), !getConfig().getBoolean("planetoids.disableanimals"));
       
       PGRunnable task = new PGRunnable();
-      if (getConfig().getBoolean("planetoids.alwaysnight", true)) {
+      if (getConfig().getBoolean("planetoids.alwaysnight")) {
          scheduler.scheduleSyncRepeatingTask(this, task, 60L, 8399L);
       }
    }
