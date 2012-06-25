@@ -1,9 +1,6 @@
 package org.canis85.planetoidgen;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -21,10 +18,8 @@ import org.bukkit.scheduler.BukkitScheduler;
 public class PlanetoidGen extends JavaPlugin {
 
    String worldName = null;
-   private final Map<String, Object> CONFIG_DEFAULTS = new HashMap<String, Object>();
    private BukkitScheduler scheduler;
    public static World planetoids = null;
-   public static Random seedPod = new Random();
 
    private void loadDefaults() {
       getConfig().options().copyDefaults(true);
@@ -35,7 +30,6 @@ public class PlanetoidGen extends JavaPlugin {
       getConfig().addDefault("planetoids.commands.pltp", Boolean.valueOf(true));
       getConfig().addDefault("planetoids.disablemonsters", Boolean.valueOf(true));
       getConfig().addDefault("planetoids.disableanimals", Boolean.valueOf(false));
-      getConfig().addDefault("planetoids.seed", seedPod.nextLong());
       getConfig().addDefault("planetoids.planets.density", 750);
       getConfig().addDefault("planetoids.planets.minSize", 4);
       getConfig().addDefault("planetoids.planets.maxSize", 20);
@@ -43,6 +37,7 @@ public class PlanetoidGen extends JavaPlugin {
       getConfig().addDefault("planetoids.planets.minShellSize", 3);
       getConfig().addDefault("planetoids.planets.maxShellSize", 5);
       getConfig().addDefault("planetoids.planets.floorBlock", "GRASS");
+      getConfig().addDefault("planetoids.planets.floorBlockData", 0);
       getConfig().addDefault("planetoids.planets.floorHeight", 0);
       getConfig().addDefault("planetoids.planets.bedrock", Boolean.valueOf(false));
 
@@ -60,6 +55,7 @@ public class PlanetoidGen extends JavaPlugin {
       shells.add(Material.OBSIDIAN.toString() + "-0.5");
       shells.add(Material.MOSSY_COBBLESTONE.toString() + "-0.3");
       shells.add(Material.WOOL.toString() + "-0.4");
+      shells.add(Material.WOOL.toString() + "-0.4-6");
       shells.add(Material.GLASS.toString() + "-0.9");
 
       cores.add(Material.PUMPKIN.toString() + "-0.8");

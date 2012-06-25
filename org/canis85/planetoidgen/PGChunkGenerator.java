@@ -16,7 +16,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -28,11 +30,10 @@ import org.bukkit.plugin.Plugin;
  */
 public class PGChunkGenerator extends ChunkGenerator {
 
-   private Map<Material, Float> allowedShells;
-   private Map<Material, Float> allowedCores;
+   private Map<MaterialData, Float> allowedShells;
+   private Map<MaterialData, Float> allowedCores;
    private Map<Point, List<Planetoid>> cache;
-   private static final int SYSTEM_SIZE = 50;
-   private long seed;   //Seed for generating planetoids
+   public static final int SYSTEM_SIZE = 50;
    private int density; //Number of planetoids it will try to create per "system"
    private int minSize; //Minimum radius
    private int maxSize; //Maximum radius
@@ -45,28 +46,51 @@ public class PGChunkGenerator extends ChunkGenerator {
    private boolean bedrockFloor; //if true and floorHeight > 0, the very bottom will be bedrock
 
    private void loadAllowedBlocks() {
-      allowedCores = new EnumMap<Material, Float>(Material.class);
-      allowedShells = new EnumMap<Material, Float>(Material.class);
+      allowedCores = new HashMap<MaterialData, Float>();
+      allowedShells = new HashMap<MaterialData, Float>();
       for (String s : plugin.getConfig().getStringList("planetoids.planets.blocks.cores")) {
          String[] sSplit = s.split("-");
-         Material newMat = Material.matchMaterial(sSplit[0]);
+
+         //is it a numerical index or a descriptive string?
+         Material newMat = null;
+         try {
+            newMat = Material.getMaterial(Integer.valueOf(sSplit[0]));
+         } catch (NumberFormatException ex) {
+         }
+         if (newMat == null) {
+            newMat = Material.matchMaterial(sSplit[0]);
+         }
          if (newMat.isBlock()) {
             if (sSplit.length == 2) {
-               allowedCores.put(newMat, Float.valueOf(sSplit[1]));
+               allowedCores.put(newMat.getNewData((byte) 0), Float.valueOf(sSplit[1]));
+            } else if (sSplit.length == 3) {
+               allowedCores.put(newMat.getNewData(Byte.valueOf(sSplit[2])), Float.valueOf(sSplit[1]));
             } else {
-               allowedCores.put(newMat, 1.0f);
+               allowedCores.put(newMat.getNewData((byte) 0), 1.0f);
             }
          }
       }
 
       for (String s : plugin.getConfig().getStringList("planetoids.planets.blocks.shells")) {
          String[] sSplit = s.split("-");
-         Material newMat = Material.matchMaterial(sSplit[0]);
+         
+         //is it a numerical index or a descriptive string?
+         Material newMat = null;
+         try {
+            newMat = Material.getMaterial(Integer.valueOf(sSplit[0]));
+         } catch (NumberFormatException ex) {
+         }
+         if (newMat == null) {
+            newMat = Material.matchMaterial(sSplit[0]);
+         }
+         
          if (newMat.isBlock()) {
             if (sSplit.length == 2) {
-               allowedShells.put(newMat, Float.valueOf(sSplit[1]));
+               allowedShells.put(newMat.getNewData((byte) 0), Float.valueOf(sSplit[1]));
+            } else if (sSplit.length == 3) {
+               allowedShells.put(newMat.getNewData(Byte.valueOf(sSplit[2])), Float.valueOf(sSplit[1]));
             } else {
-               allowedShells.put(newMat, 1.0f);
+               allowedShells.put(newMat.getNewData((byte) 0), 1.0f);
             }
          }
       }
@@ -74,7 +98,6 @@ public class PGChunkGenerator extends ChunkGenerator {
 
    public PGChunkGenerator(Plugin plugin) {
       this.plugin = plugin;
-      this.seed = (long) plugin.getConfig().getLong("planetoids.seed");
       this.density = plugin.getConfig().getInt("planetoids.planets.density");
       minSize = plugin.getConfig().getInt("planetoids.planets.minSize");
       maxSize = plugin.getConfig().getInt("planetoids.planets.maxSize");
@@ -90,12 +113,7 @@ public class PGChunkGenerator extends ChunkGenerator {
       cache = new HashMap<Point, List<Planetoid>>();
    }
 
-   @Override
-   public short[][] generateExtBlockSections(World world, Random random, int x, int z, BiomeGrid biomes) {
-      world.setBiome(x, z, Biome.SKY);
-      int height = world.getMaxHeight();
-      short[][] retVal = new short[height / 16][];
-
+   private List<Planetoid> getSystem(World world, Random random, int x, int z) {
       int sysX;
       if (x >= 0) {
          sysX = x / SYSTEM_SIZE;
@@ -117,7 +135,7 @@ public class PGChunkGenerator extends ChunkGenerator {
 
       if (curSystem == null) {
          //if not, does it exist on disk?
-         File systemFolder = new File(plugin.getDataFolder(), "Systems");
+         File systemFolder = new File(plugin.getDataFolder(), world.getName() + "_Systems");
          if (!systemFolder.exists()) {
             systemFolder.mkdir();
          }
@@ -136,22 +154,47 @@ public class PGChunkGenerator extends ChunkGenerator {
             }
          } else {
             //generate, save, and cache
-            curSystem = generatePlanets(sysX, sysZ, world.getMaxHeight());
-            try {
-               systemFile.createNewFile();
-               FileOutputStream fos = new FileOutputStream(systemFile);
-               ObjectOutputStream oos = new ObjectOutputStream(fos);
-               oos.writeObject(curSystem);
-               oos.flush();
-               oos.close();
-               fos.flush();
-               fos.close();
-            } catch (Exception ex) {
-               ex.printStackTrace();
+            if (random != null) {
+               curSystem = generatePlanets(sysX, sysZ, world.getMaxHeight(), random);
+               try {
+                  systemFile.createNewFile();
+                  FileOutputStream fos = new FileOutputStream(systemFile);
+                  ObjectOutputStream oos = new ObjectOutputStream(fos);
+                  oos.writeObject(curSystem);
+                  oos.flush();
+                  oos.close();
+                  fos.flush();
+                  fos.close();
+               } catch (Exception ex) {
+                  ex.printStackTrace();
+               }
+               cache.put(new Point(sysX, sysZ), curSystem);
+            } else {
+               throw new RuntimeException("Tried to use a BlockPopulator before a chunk was generated, this shouldn't happen.");
             }
-            cache.put(new Point(sysX, sysZ), curSystem);
          }
       }
+
+      return curSystem;
+   }
+
+   /**
+    * @param world the world to get the system for
+    * @param x chunk x location
+    * @param z chunk z location
+    * @return List of planetoids representing the system this chunk is in
+    */
+   public List<Planetoid> getSystem(World world, int x, int z) {
+      return getSystem(world, null, x, z);
+   }
+
+   @Override
+   public short[][] generateExtBlockSections(World world, Random random, int x, int z, BiomeGrid biomes) {
+      world.setBiome(x, z, Biome.SKY);
+      int height = world.getMaxHeight();
+      short[][] retVal = new short[height / 16][];
+
+      List<Planetoid> curSystem = getSystem(world, random, x, z);
 
       //figure out the chunk's position in the "system"
       int chunkXPos;
@@ -266,7 +309,7 @@ public class PGChunkGenerator extends ChunkGenerator {
       return new Location(world, 7, 77, 7);
    }
 
-   private List<Planetoid> generatePlanets(int x, int z, int height) {
+   private List<Planetoid> generatePlanets(int x, int z, int height, Random rand) {
       List<Planetoid> planetoids = new ArrayList<Planetoid>();
 
       //If x and Z are zero, generate a log/leaf planet close to 0,0
@@ -282,36 +325,26 @@ public class PGChunkGenerator extends ChunkGenerator {
          planetoids.add(spawnPl);
       }
 
-      //if X is negative, left shift seed by one
-      if (x < 0) {
-         seed = seed << 1;
-      } //if Z is negative, change sign on seed.
-      if (z < 0) {
-         seed = -seed;
-      }
-
-      Random rand = new Random(seed);
-      for (int i = 0; i
-              < Math.abs(x) + Math.abs(z); i++) {
-         //cycle generator
-         rand.nextDouble();
-      }
-
       for (int i = 0; i < density; i++) {
          //Try to make a planet
          Planetoid curPl = new Planetoid();
-         curPl.shellBlk = getBlockType(rand, false, true);
+         MaterialData shellBlkMatData = getBlockType(rand, false, true);
+         MaterialData coreBlkMatData = null;
+         curPl.shellBlk = shellBlkMatData.getItemType();
+         curPl.shellBlkMat = shellBlkMatData.getData();
          switch (curPl.shellBlk) {
             case LEAVES:
-               curPl.coreBlk = Material.LOG;
+               coreBlkMatData = Material.LOG.getNewData((byte)0);
                break;
             case ICE:
             case WOOL:
-               curPl.coreBlk = getBlockType(rand, true, true);
+               coreBlkMatData = getBlockType(rand, true, true);
             default:
-               curPl.coreBlk = getBlockType(rand, true, false);
+               coreBlkMatData = getBlockType(rand, true, false);
                break;
          }
+         curPl.coreBlk = coreBlkMatData.getItemType();
+         curPl.coreBlkMat = coreBlkMatData.getData();
 
          curPl.shellThickness = rand.nextInt(maxShellSize - minShellSize) + minShellSize;
          curPl.radius = rand.nextInt(maxSize - minSize) + minSize;
@@ -368,9 +401,9 @@ public class PGChunkGenerator extends ChunkGenerator {
     * @param heated if true, will not return a block that gives off heat
     * @return
     */
-   private Material getBlockType(Random rand, boolean core, boolean noHeat) {
-      Material retVal = null;
-      Map<Material, Float> refMap;
+   private MaterialData getBlockType(Random rand, boolean core, boolean noHeat) {
+      MaterialData retVal = null;
+      Map<MaterialData, Float> refMap;
       if (core) {
          refMap = allowedCores;
       } else {
@@ -378,11 +411,11 @@ public class PGChunkGenerator extends ChunkGenerator {
       }
       while (retVal == null) {
          int arrayPos = rand.nextInt(refMap.size());
-         Material blkID = (Material) refMap.keySet().toArray()[arrayPos];
+         MaterialData blkID = (MaterialData) refMap.keySet().toArray()[arrayPos];
          float testVal = rand.nextFloat();
          if (refMap.get(blkID) >= testVal) {
             if (noHeat) {
-               switch (blkID) {
+               switch (blkID.getItemType()) {
                   case BURNING_FURNACE:
                   case FIRE:
                   case GLOWSTONE:
@@ -400,5 +433,12 @@ public class PGChunkGenerator extends ChunkGenerator {
       }
       return retVal;
 
+   }
+
+   @Override
+   public List<BlockPopulator> getDefaultPopulators(World world) {
+      List<BlockPopulator> retVal = new ArrayList<BlockPopulator>();
+      retVal.add(new PGBlockPopulator(plugin, this));
+      return retVal;
    }
 }

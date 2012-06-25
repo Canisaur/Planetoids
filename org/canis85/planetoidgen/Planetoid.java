@@ -19,6 +19,10 @@ public class Planetoid implements Serializable {
    public int xPos;
    public int yPos;
    public int zPos;
+   
+   //Extra material data
+   public byte coreBlkMat;
+   public byte shellBlkMat;
 
    public Planetoid() {}
 
