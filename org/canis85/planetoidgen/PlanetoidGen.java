@@ -122,7 +122,6 @@ public class PlanetoidGen extends JavaPlugin {
       PGChunkGenerator pgGen = new PGChunkGenerator(this);
 
       WorldCreator wc = new WorldCreator(worldName);
-      wc.seed((long) getConfig().getLong("planetoids.seed"));
       wc.environment(Environment.NORMAL);
       wc.generator(pgGen);
 
